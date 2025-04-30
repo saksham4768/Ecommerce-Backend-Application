@@ -1,11 +1,15 @@
 package com.ecommerce.project.controller;
 
+import com.ecommerce.project.config.AppConstants;
 import com.ecommerce.project.model.Category;
 import com.ecommerce.project.payload.CategoryDTO;
 import com.ecommerce.project.payload.CategoryResponse;
 import com.ecommerce.project.service.CategoryService;
 import jakarta.validation.Valid;
 import org.modelmapper.ModelMapper;
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.PageRequest;
+import org.springframework.data.domain.Pageable;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
@@ -21,11 +25,9 @@ public class CategoryController {
     private final CategoryService categoryService;
 
 
-    private final ModelMapper modelMapper;
 
-    public CategoryController(CategoryService categoryService, ModelMapper modelMapper){
+    public CategoryController(CategoryService categoryService){
         this.categoryService = categoryService;
-        this.modelMapper = modelMapper;
     }
 
     @GetMapping("/echo")
@@ -35,10 +37,12 @@ public class CategoryController {
     @GetMapping("/public/categories")
     //@RequestMapping(value = "/api/public/categories", method = RequestMethod.GET)
     public ResponseEntity<CategoryResponse> getCategories(
-            @RequestParam(name = "pageNumber") Integer pageNumber,
-            @RequestParam(name = "pageSize") Integer pageSize
+            @RequestParam(name = "pageNumber", defaultValue = AppConstants.PAGE_NUMBER, required = false) Integer pageNumber,
+            @RequestParam(name = "pageSize",defaultValue = AppConstants.PAGE_SIZE, required = false) Integer pageSize,
+            @RequestParam(name = "sortBy",defaultValue = AppConstants.SORT_CATEGORIES_BY, required = false) String sortBY,
+            @RequestParam(name = "sortOrder",defaultValue = AppConstants.SORT_DIR, required = false) String sortOrder
     ) {
-        CategoryResponse categoryResponse =  categoryService.getAllCategories(pageNumber, pageSize);
+        CategoryResponse categoryResponse =  categoryService.getAllCategories(pageNumber, pageSize, sortBY, sortOrder);
         return new ResponseEntity<>(categoryResponse, HttpStatus.OK);
     }
 
