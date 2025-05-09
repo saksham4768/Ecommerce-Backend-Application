@@ -41,10 +41,10 @@ public class User {
     @Size(max = 120)
     private String password;
 
-    public User(String password, String username, Long userId) {
+    public User(String password, String username, String email) {
         this.password = password;
         this.username = username;
-        this.userId = userId;
+        this.email = email;
     }
 
     @ManyToMany(cascade = {CascadeType.PERSIST, CascadeType.MERGE},
