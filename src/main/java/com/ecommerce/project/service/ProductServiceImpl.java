@@ -75,8 +75,13 @@ public class ProductServiceImpl implements ProductService{
         Pageable pageable = PageRequest.of(pageNumber, pageSize, sortByOrder);
         Page<Product> productPage = productRepository.findAll(pageable);
         List<Product> products = productPage.getContent();
-
+        if(products.isEmpty()){
+            throw new MyAPIException("No Products created till now");
+        }
+        List<ProductDTO>productDTO = products.stream().map(
+                product -> modelMapper.map(product, ProductDTO.class)).toList();
         ProductResponse productResponse = convertProductsToProductResponse(products);
+        productResponse.setContent(productDTO);
         productResponse.setPageNumber(productPage.getNumber());
         productResponse.setPageSize(productPage.getSize());
         productResponse.setTotalPages(productPage.getTotalPages());

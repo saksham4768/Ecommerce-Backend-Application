@@ -12,7 +12,11 @@ import com.ecommerce.project.security.request.SignupRequest;
 import com.ecommerce.project.security.response.MessageResponse;
 import com.ecommerce.project.security.services.UserDetailsImpl;
 import jakarta.validation.Valid;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
+import org.springframework.http.HttpHeaders;
 import org.springframework.http.HttpStatus;
+import org.springframework.http.ResponseCookie;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.authentication.AuthenticationManager;
 import org.springframework.security.authentication.UsernamePasswordAuthenticationToken;
@@ -20,13 +24,16 @@ import org.springframework.security.core.Authentication;
 import org.springframework.security.core.AuthenticationException;
 import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.security.crypto.password.PasswordEncoder;
-import org.springframework.web.bind.annotation.PostMapping;
-import org.springframework.web.bind.annotation.RequestBody;
+import org.springframework.web.bind.annotation.*;
 
 import java.util.*;
 import java.util.stream.Collectors;
 
+@RestController
+@RequestMapping("/api/auth")
 public class AuthController {
+
+    private final Logger logger = LoggerFactory.getLogger(AuthController.class);
 
     private final JwtUtils jwtUtils;
     private final AuthenticationManager authenticationManager;
@@ -47,6 +54,7 @@ public class AuthController {
     public ResponseEntity<?> authenticateUser(@RequestBody LoginRequest loginRequest){
         Authentication authentication;
         try{
+            //check username and password is valid present in database or not
             authentication = authenticationManager.authenticate(new UsernamePasswordAuthenticationToken(loginRequest.getUsername(), loginRequest.getPassword()));
 
         } catch (AuthenticationException e) {
@@ -58,30 +66,33 @@ public class AuthController {
 
         SecurityContextHolder.getContext().setAuthentication(authentication);
         UserDetailsImpl userDetails = (UserDetailsImpl) authentication.getPrincipal();
-        String jwtToken = jwtUtils.generateTokenFromUsername(userDetails);
+        ResponseCookie jwtCookie = jwtUtils.generateJwtCookie(userDetails);
 
         List<String> roles = userDetails.getAuthorities().stream()
                 .map(item -> item.getAuthority())
                 .collect(Collectors.toList());
 
-        LoginResponse response = new LoginResponse(userDetails.getId(), jwtToken, roles, userDetails.getUsername());
-        return ResponseEntity.ok(response);
+        LoginResponse response = new LoginResponse(userDetails.getId(), roles, userDetails.getUsername());
+        return ResponseEntity.ok().header(HttpHeaders.SET_COOKIE, jwtCookie.toString()).body(response);
     }
 
     @PostMapping("/signup")
     public ResponseEntity<?> registerUser(@Valid @RequestBody SignupRequest signupRequest){
-       Optional<User> user =  userRepository.findByUserName(signupRequest.getUsername());
+        logger.info("User -> {}", signupRequest);
+       Optional<User> user =  userRepository.findByusername(signupRequest.getUsername());
+
        if(user.isPresent()){
            return ResponseEntity.badRequest()
                    .body(new MessageResponse("Error: Username is already taken!"));
        }
-       if(userRepository.findByEmail(signupRequest.getEmail())){
+
+       if(userRepository.existsByEmail(signupRequest.getEmail())){
            return ResponseEntity.badRequest()
                    .body(new MessageResponse("Error: Email is already taken!"));
        }
-
-       User signUpUser = new User(passwordEncoder.encode(signupRequest.getPassword()), signupRequest.getUsername(), signupRequest.getEmail());
-
+       logger.info("Sign up user before encode the password {}", user);
+       User signUpUser = new User(signupRequest.getUsername(), signupRequest.getEmail(), passwordEncoder.encode(signupRequest.getPassword()));
+       logger.info("Sign up user after encode the password {}", user);
        Set<String> signUpRoles = signupRequest.getRole();
        Set<Role> roles = new HashSet<>();
        if(signUpRoles == null){
@@ -114,7 +125,37 @@ public class AuthController {
        }
 
        signUpUser.setRoles(roles);
+       logger.info("Sign up user after setting the roles {}", signUpUser);
        userRepository.save(signUpUser);
        return ResponseEntity.ok(new MessageResponse("User registered successfully!"));
+    }
+
+    @GetMapping("/currentUser")
+    public String currentAuthenticatedUser(Authentication authentication){
+        if(authentication != null){
+            return authentication.getName();
+        }
+        else{
+            return "";
+        }
+    }
+
+    @GetMapping("/currentUserDetails")
+    public ResponseEntity<?> currentAuthenticatedUserDetails(Authentication authentication){
+        UserDetailsImpl userDetails = (UserDetailsImpl) authentication.getPrincipal();
+
+        List<String> roles = userDetails.getAuthorities().stream()
+                .map(item -> item.getAuthority())
+                .collect(Collectors.toList());
+
+        LoginResponse response = new LoginResponse(userDetails.getId(), roles, userDetails.getUsername());
+        return ResponseEntity.ok().body(response);
+    }
+
+    @PostMapping("/signOut")
+    public ResponseEntity<?> signOutUser(){
+        ResponseCookie cookie = jwtUtils.getCleanJetCookie();
+        return ResponseEntity.ok().header(HttpHeaders.SET_COOKIE, cookie.toString())
+                .body(new MessageResponse("You have been Signout Out!"));
     }
 }

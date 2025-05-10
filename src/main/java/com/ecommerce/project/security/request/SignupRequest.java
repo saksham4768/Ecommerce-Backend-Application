@@ -1,5 +1,6 @@
 package com.ecommerce.project.security.request;
 
+import jakarta.persistence.Column;
 import jakarta.validation.constraints.Email;
 import jakarta.validation.constraints.NotBlank;
 import jakarta.validation.constraints.Size;
@@ -10,7 +11,7 @@ import java.util.Set;
 @Data
 public class SignupRequest {
     @NotBlank
-    @Size(min = 3, max = 20)
+    @Size(max = 20)
     private String username;
 
     @NotBlank
@@ -21,7 +22,7 @@ public class SignupRequest {
     private Set<String> role;
 
     @NotBlank
-    @Size(min = 4, max = 40)
+    @Size(max = 120)
     private String password;
 
 }

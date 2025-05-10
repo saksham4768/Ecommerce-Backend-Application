@@ -18,4 +18,10 @@ public class LoginResponse {
         this.roles = roles;
         this.username = username;
     }
+
+    public LoginResponse(Long id, List<String> roles, String username) {
+        this.id = id;
+        this.roles = roles;
+        this.username = username;
+    }
 }

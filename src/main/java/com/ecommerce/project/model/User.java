@@ -41,7 +41,7 @@ public class User {
     @Size(max = 120)
     private String password;
 
-    public User(String password, String username, String email) {
+    public User(String username, String email, String password) {
         this.password = password;
         this.username = username;
         this.email = email;
@@ -53,6 +53,10 @@ public class User {
         joinColumns = @JoinColumn(name = "user_id"),
         inverseJoinColumns = @JoinColumn(name = "role_id"))
     private Set<Role> roles = new HashSet<>();
+
+    @ToString.Exclude
+    @OneToOne(mappedBy = "user", cascade = {CascadeType.MERGE, CascadeType.PERSIST, CascadeType.MERGE}, orphanRemoval = true)
+    private Cart cart;
 
     @ToString.Exclude
     @OneToMany(mappedBy = "user",
