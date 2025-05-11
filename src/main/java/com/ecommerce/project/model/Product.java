@@ -45,5 +45,5 @@ public class Product {
     private User user;
 
     @OneToMany(mappedBy = "product", cascade = {CascadeType.PERSIST, CascadeType.MERGE, CascadeType.REMOVE}, orphanRemoval = true)
-    private List<cartItem> products = new ArrayList<>();
+    private List<CartItem> products = new ArrayList<>();
 }
