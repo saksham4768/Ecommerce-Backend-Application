@@ -1,7 +1,11 @@
 package com.ecommerce.project.controller;
 
+import com.ecommerce.project.exceptions.MyAPIException;
+import com.ecommerce.project.model.Cart;
 import com.ecommerce.project.payload.CartDTO;
+import com.ecommerce.project.repository.CartRepository;
 import com.ecommerce.project.service.CartService;
+import com.ecommerce.project.util.AuthUtil;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
@@ -14,8 +18,13 @@ public class CartController {
 
     private final CartService cartService;
 
-    public CartController(CartService cartService) {
+    private final AuthUtil authUtil;
+
+    private final CartRepository cartRepository;
+    public CartController(CartService cartService, AuthUtil authUtil, CartRepository cartRepository) {
         this.cartService = cartService;
+        this.authUtil = authUtil;
+        this.cartRepository = cartRepository;
     }
 
     @PostMapping("/carts/product/{productId}/quantity/{quantity}")
@@ -28,5 +37,13 @@ public class CartController {
     public ResponseEntity<List<CartDTO>> getCarts(){
         List<CartDTO> cartDTOs = cartService.getAllCarts();
         return new ResponseEntity<>(cartDTOs, HttpStatus.FOUND);
+    }
+
+    @GetMapping("/carts/user/cart")
+    public ResponseEntity<CartDTO> getCartsById(){
+            String authenticatedEmail = authUtil.loggedInEmail();
+            Cart cart = cartRepository.findCartByEmail(authenticatedEmail);
+            CartDTO cartDTO = cartService.getCarts(authenticatedEmail, cart.getCartId());
+            return new ResponseEntity<>(cartDTO, HttpStatus.OK);
     }
 }
