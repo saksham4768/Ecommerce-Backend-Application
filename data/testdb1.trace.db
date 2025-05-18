@@ -202,3 +202,18 @@ org.h2.jdbc.JdbcSQLNonTransientConnectionException: Database is already closed (
 2025-05-10 10:37:14.891341+05:30 jdbc[13]: exception
 org.h2.jdbc.JdbcSQLSyntaxErrorException: Syntax error in SQL statement "[*]\\USER_ROLES"; SQL statement:
 \USER_ROLES [42000-232]
+2025-05-18 14:10:48.902958+05:30 jdbc[13]: exception
+org.h2.jdbc.JdbcSQLSyntaxErrorException: Syntax error in SQL statement "SELECT * [*]FROMPRODUCTS"; SQL statement:
+SELECT * FROMPRODUCTS [42000-232]
+2025-05-18 14:17:38.796515+05:30 jdbc[13]: exception
+org.h2.jdbc.JdbcSQLSyntaxErrorException: Syntax error in SQL statement "SELECT * FROM CATEGORIES \000d\000a\000d\000a[*]select * from Products"; SQL statement:
+SELECT * FROM CATEGORIES 
+
+select * from Products [42000-232]
+2025-05-18 15:09:28.043172+05:30 jdbc[24]: exception
+org.h2.jdbc.JdbcSQLSyntaxErrorException: Syntax error in SQL statement "Select * from ROLES\000d\000a\000d\000a[*]SELECT * FROM USERS \000d\000a\000d\000aselect * from User_Roles"; SQL statement:
+Select * from ROLES
+
+SELECT * FROM USERS 
+
+select * from User_Roles [42000-232]

@@ -9,6 +9,7 @@ import lombok.NoArgsConstructor;
 @Table(name = "order_items")
 @AllArgsConstructor
 @NoArgsConstructor
+@Entity
 public class OrderItems {
 
     @Id

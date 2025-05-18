@@ -7,12 +7,14 @@ import com.ecommerce.project.payload.OrderItemDTO;
 import com.ecommerce.project.repository.*;
 import jakarta.transaction.Transactional;
 import org.modelmapper.ModelMapper;
+import org.springframework.stereotype.Service;
 
 import java.time.LocalDate;
 import java.util.ArrayList;
 import java.util.Calendar;
 import java.util.List;
 
+@Service
 public class OrderServiceImpl implements OrderService{
 
     private final CartRepository cartRepository;
