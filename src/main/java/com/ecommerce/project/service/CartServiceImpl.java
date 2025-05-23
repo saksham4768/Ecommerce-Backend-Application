@@ -13,8 +13,13 @@ import com.ecommerce.project.repository.CartRepository;
 import com.ecommerce.project.repository.ProductRepository;
 import com.ecommerce.project.util.AuthUtil;
 import jakarta.transaction.Transactional;
+import jakarta.validation.constraints.Null;
+import lombok.extern.slf4j.Slf4j;
+import org.apache.juli.logging.Log;
 import org.modelmapper.ModelMapper;
+import org.slf4j.Logger;
 import org.springframework.security.core.context.SecurityContextHolder;
+import org.springframework.security.core.parameters.P;
 import org.springframework.stereotype.Service;
 
 import java.util.List;
@@ -22,6 +27,7 @@ import java.util.stream.Collectors;
 import java.util.stream.Stream;
 
 @Service
+@Slf4j
 public class CartServiceImpl implements CartService{
 
     private final CartRepository cartRepository;
@@ -29,6 +35,8 @@ public class CartServiceImpl implements CartService{
     private final ProductRepository productRepository;
     private final CartItemRepository cartItemRepository;
     private final ModelMapper modelMapper;
+
+
     public CartServiceImpl(CartRepository cartRepository, AuthUtil authUtil, ProductRepository productRepository, CartItemRepository cartItemRepository, ModelMapper modelMapper) {
         this.cartRepository = cartRepository;
         this.authUtil = authUtil;
@@ -39,6 +47,8 @@ public class CartServiceImpl implements CartService{
 
     @Override
     public CartDTO addProductToCart(Long productId, Integer quantity) {
+        log.debug("Inside CartServiceImpl for add Product in Cart {}", productId);
+        System.out.println("Inside CartServiceImpl for add Product in Cart "+ productId);
         //create cart or find existing cart
         Cart cart = createCart();
         //retrieve the product details
@@ -46,10 +56,12 @@ public class CartServiceImpl implements CartService{
                 .orElseThrow(() -> new ResourceNotFoundException("Product", productId, "productId"));
 
         CartItem cartItem = cartItemRepository.findCartItemByProductIdAndCartId(cart.getCartId(), productId);
-
+        log.debug("Product Id is -> {}", productId);
+        System.out.println("cartItem is Null");
         if(cartItem != null){
             throw new MyAPIException("Product " + product.getProductName() + " already exists in the cart");
         }
+
         //perform validations
         if(product.getQuantity() == 0){
             throw new MyAPIException(product.getProductName() + " is not available");
@@ -57,6 +69,7 @@ public class CartServiceImpl implements CartService{
         if(product.getQuantity() < quantity){
             throw new MyAPIException("Please, make an order of the " + product.getProductName() + " less than or equal to the quantity " + product.getQuantity() + ".");
         }
+
         //create cart items
         CartItem newCartItem = new CartItem();
         newCartItem.setProduct(product);
@@ -64,9 +77,9 @@ public class CartServiceImpl implements CartService{
         newCartItem.setQuantity(quantity);
         newCartItem.setDiscount(product.getDiscount());
         newCartItem.setProductPrice(product.getSpecialPrice());
+
         //saving the cart item
         cartItemRepository.save(newCartItem);
-        product.setQuantity(product.getQuantity());
         cart.setTotalPrice(cart.getTotalPrice() + (product.getSpecialPrice() * quantity));
         cartRepository.save(cart);
         CartDTO cartDTO = modelMapper.map(cart, CartDTO.class);
@@ -95,7 +108,11 @@ public class CartServiceImpl implements CartService{
             CartDTO cartDTO = modelMapper.map(cart, CartDTO.class);
 
             List<ProductDTO> products = cart.getCartItems().stream()
-                    .map(p -> modelMapper.map(p.getProduct(), ProductDTO.class))
+                    .map(p -> {
+                        ProductDTO productDTO = modelMapper.map(p.getProduct(), ProductDTO.class);
+                        productDTO.setQuantity(p.getQuantity());
+                        return productDTO;
+                    })
                     .collect(Collectors.toList());
 
             cartDTO.setProducts(products);
