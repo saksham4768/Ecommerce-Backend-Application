@@ -21,7 +21,6 @@ import org.springframework.stereotype.Service;
 import org.springframework.web.multipart.MultipartFile;
 import java.io.IOException;
 import java.util.List;
-import java.util.stream.Collectors;
 
 @Service
 public class ProductServiceImpl implements ProductService{
@@ -115,10 +114,22 @@ public class ProductServiceImpl implements ProductService{
     }
 
     @Override
-    public ProductResponse searchProductsByKeyword(String keyword) {
+    public ProductResponse searchProductsByKeyword(String keyword, Integer pageNumber, Integer pageSize, String sortBy, String sortOrder) {
         //check if product size is zero or not if zero raise the API exception
-        List<Product>products = productRepository.findByproductNameLikeIgnoreCase(keyword);
-        return convertProductsToProductResponse(products);
+        Sort sortByOrder = sortBy.equalsIgnoreCase("asc")
+                ?Sort.by(sortBy).ascending()
+                : Sort.by(sortBy).descending();
+
+        Pageable pageable = PageRequest.of(pageNumber, pageSize, sortByOrder);
+        Page<Product>productPage = productRepository.findByproductNameLikeIgnoreCase(keyword, pageable);
+        List<Product> products = productPage.getContent();
+        ProductResponse productResponse = convertProductsToProductResponse(products);
+        productResponse.setPageNumber(productPage.getNumber());
+        productResponse.setPageSize(productPage.getSize());
+        productResponse.setTotalPages(productPage.getTotalPages());
+        productResponse.setLastPage(productPage.isLast());
+        productResponse.setTotalElements(productPage.getTotalElements());
+        return productResponse;
     }
 
     @Override

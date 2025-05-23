@@ -1,6 +1,5 @@
 package com.ecommerce.project.controller;
 
-import com.ecommerce.project.exceptions.MyAPIException;
 import com.ecommerce.project.model.Cart;
 import com.ecommerce.project.payload.CartDTO;
 import com.ecommerce.project.repository.CartRepository;
