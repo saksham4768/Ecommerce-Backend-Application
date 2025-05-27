@@ -7,6 +7,7 @@ import com.ecommerce.project.model.User;
 import com.ecommerce.project.payload.AddressDTO;
 import com.ecommerce.project.repository.AddressRepository;
 import com.ecommerce.project.repository.UserRepository;
+import lombok.extern.slf4j.Slf4j;
 import org.modelmapper.ModelMapper;
 import org.springframework.stereotype.Service;
 
@@ -14,6 +15,7 @@ import java.util.List;
 import java.util.stream.Collectors;
 
 @Service
+@Slf4j
 public class AddressServiceImpl implements AddressService{
 
     public final ModelMapper modelMapper;
@@ -29,13 +31,14 @@ public class AddressServiceImpl implements AddressService{
     public AddressDTO createAddress(AddressDTO addressDTO, User currentUser) {
         Address address = modelMapper.map(addressDTO, Address.class);
 
-        List<Address> addressList = currentUser.getAddresses();
-        addressList.add(address);
-        currentUser.setAddresses(addressList);
-
+        // Set bidirectional relationship
         address.setUser(currentUser);
-        Address savedAddress = addressRepository.save(address);
-        return modelMapper.map(savedAddress, AddressDTO.class);
+        currentUser.getAddresses().add(address);
+
+        // Save user only if cascade is enabled, or save only address if not modifying user
+        addressRepository.save(address); // OR userRepository.save(currentUser) if cascade is enabled
+
+        return modelMapper.map(address, AddressDTO.class);
     }
 
     @Override

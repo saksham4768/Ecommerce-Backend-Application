@@ -21,7 +21,7 @@ public class AddressController {
         this.addressService = addressService;
         this.authUtil = authUtil;
     }
-
+    
     @PostMapping("/addresses")
     public ResponseEntity<AddressDTO> createAddress(@RequestBody AddressDTO addressDTO){
         User currentUser = authUtil.loggedInUser();
