@@ -35,14 +35,15 @@ public class CartServiceImpl implements CartService{
     private final ProductRepository productRepository;
     private final CartItemRepository cartItemRepository;
     private final ModelMapper modelMapper;
+    private final RedisService redisService;
 
-
-    public CartServiceImpl(CartRepository cartRepository, AuthUtil authUtil, ProductRepository productRepository, CartItemRepository cartItemRepository, ModelMapper modelMapper) {
+    public CartServiceImpl(CartRepository cartRepository, AuthUtil authUtil, ProductRepository productRepository, CartItemRepository cartItemRepository, ModelMapper modelMapper, RedisService redisService) {
         this.cartRepository = cartRepository;
         this.authUtil = authUtil;
         this.productRepository = productRepository;
         this.cartItemRepository = cartItemRepository;
         this.modelMapper = modelMapper;
+        this.redisService = redisService;
     }
 
     @Override
@@ -122,17 +123,36 @@ public class CartServiceImpl implements CartService{
 
     @Override
     public CartDTO getCarts(String authenticatedEmail, Long cartId) {
-        Cart cart = cartRepository.findCartByEmailAndById(authenticatedEmail,cartId);
-        if(cart == null){
-            throw new ResourceNotFoundException("cartId", cartId, "Cart");
-        }
 
-        CartDTO cartDTO = modelMapper.map(cart, CartDTO.class);
-        cart.getCartItems().forEach(c -> c.getProduct().setQuantity(c.getQuantity()));
-        List<ProductDTO> products = cart.getCartItems().stream().map(p -> modelMapper.map(p.getProduct(), ProductDTO.class))
-                .toList();
-        cartDTO.setProducts(products);
-        return cartDTO;
+        //Using Caching with redis
+        Cart cartFromCache = redisService.get(cartId.toString(), Cart.class);
+        if(cartFromCache != null){
+            log.debug("Get Carts from cache {}", cartFromCache);
+            System.out.println("In Cache");
+            CartDTO cartDTO = modelMapper.map(cartFromCache, CartDTO.class);
+            cartFromCache.getCartItems().forEach(c -> c.getProduct().setQuantity(c.getQuantity()));
+            List<ProductDTO> products = cartFromCache.getCartItems().stream().map(p -> modelMapper.map(p.getProduct(), ProductDTO.class))
+                    .toList();
+            cartDTO.setProducts(products);
+            return cartDTO;
+        }
+        else {
+            Cart cart = cartRepository.findCartByEmailAndById(authenticatedEmail,cartId);
+            log.debug("Get Carts from DB Calls");
+            System.out.println("In DB Calls");
+            if(cart == null){
+                throw new ResourceNotFoundException("cartId", cartId, "Cart");
+            }
+            else{
+                redisService.set(cartId.toString(), cart, 3000l);
+            }
+            CartDTO cartDTO = modelMapper.map(cart, CartDTO.class);
+            cart.getCartItems().forEach(c -> c.getProduct().setQuantity(c.getQuantity()));
+            List<ProductDTO> products = cart.getCartItems().stream().map(p -> modelMapper.map(p.getProduct(), ProductDTO.class))
+                    .toList();
+            cartDTO.setProducts(products);
+            return cartDTO;
+        }
     }
 
     @Transactional

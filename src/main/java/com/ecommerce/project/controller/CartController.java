@@ -4,7 +4,9 @@ import com.ecommerce.project.model.Cart;
 import com.ecommerce.project.payload.CartDTO;
 import com.ecommerce.project.repository.CartRepository;
 import com.ecommerce.project.service.CartService;
+import com.ecommerce.project.service.RedisService;
 import com.ecommerce.project.util.AuthUtil;
+import org.springframework.data.redis.core.RedisTemplate;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
@@ -20,6 +22,7 @@ public class CartController {
     private final AuthUtil authUtil;
 
     private final CartRepository cartRepository;
+
     public CartController(CartService cartService, AuthUtil authUtil, CartRepository cartRepository) {
         this.cartService = cartService;
         this.authUtil = authUtil;
@@ -34,6 +37,7 @@ public class CartController {
 
     @GetMapping("/carts")
     public ResponseEntity<List<CartDTO>> getCarts(){
+
         List<CartDTO> cartDTOs = cartService.getAllCarts();
         return new ResponseEntity<>(cartDTOs, HttpStatus.FOUND);
     }
