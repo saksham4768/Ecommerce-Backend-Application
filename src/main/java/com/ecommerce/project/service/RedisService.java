@@ -36,6 +36,7 @@ public class RedisService {
         try{
             ObjectMapper mapper = new ObjectMapper();
             String obj = mapper.writeValueAsString(o);
+            System.out.println("Object is " + obj);
             redisTemplate.opsForValue().set(key, obj, timeToLive, TimeUnit.SECONDS);
         }
         catch (Exception e) {

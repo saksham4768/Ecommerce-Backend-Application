@@ -125,32 +125,26 @@ public class CartServiceImpl implements CartService{
     public CartDTO getCarts(String authenticatedEmail, Long cartId) {
 
         //Using Caching with redis
-        Cart cartFromCache = redisService.get(cartId.toString(), Cart.class);
-        if(cartFromCache != null){
-            log.debug("Get Carts from cache {}", cartFromCache);
+        CartDTO cachedCartDTO = redisService.get(cartId.toString(), CartDTO.class);
+        if (cachedCartDTO != null) {
+            log.debug("Get Carts from cache {}", cachedCartDTO.toString());
             System.out.println("In Cache");
-            CartDTO cartDTO = modelMapper.map(cartFromCache, CartDTO.class);
-            cartFromCache.getCartItems().forEach(c -> c.getProduct().setQuantity(c.getQuantity()));
-            List<ProductDTO> products = cartFromCache.getCartItems().stream().map(p -> modelMapper.map(p.getProduct(), ProductDTO.class))
-                    .toList();
-            cartDTO.setProducts(products);
-            return cartDTO;
+            return cachedCartDTO;
         }
         else {
             Cart cart = cartRepository.findCartByEmailAndById(authenticatedEmail,cartId);
+            CartDTO cartDTO = modelMapper.map(cart, CartDTO.class);
             log.debug("Get Carts from DB Calls");
             System.out.println("In DB Calls");
             if(cart == null){
                 throw new ResourceNotFoundException("cartId", cartId, "Cart");
             }
-            else{
-                redisService.set(cartId.toString(), cart, 3000l);
-            }
-            CartDTO cartDTO = modelMapper.map(cart, CartDTO.class);
+
             cart.getCartItems().forEach(c -> c.getProduct().setQuantity(c.getQuantity()));
             List<ProductDTO> products = cart.getCartItems().stream().map(p -> modelMapper.map(p.getProduct(), ProductDTO.class))
                     .toList();
             cartDTO.setProducts(products);
+            redisService.set(cartId.toString(), cartDTO, 3000l);
             return cartDTO;
         }
     }

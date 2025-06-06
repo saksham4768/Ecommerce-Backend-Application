@@ -1,11 +1,11 @@
 package com.ecommerce.project.model;
 
+import com.fasterxml.jackson.annotation.JsonManagedReference;
 import jakarta.persistence.*;
 import jakarta.validation.constraints.Email;
 import jakarta.validation.constraints.NotBlank;
 import jakarta.validation.constraints.Size;
 import lombok.*;
-import org.hibernate.engine.internal.Cascade;
 
 import java.util.ArrayList;
 import java.util.HashSet;
@@ -56,6 +56,7 @@ public class User {
 
     @ToString.Exclude
     @OneToOne(mappedBy = "user", cascade = {CascadeType.MERGE, CascadeType.PERSIST, CascadeType.MERGE}, orphanRemoval = true)
+    @JsonManagedReference("user")
     private Cart cart;
 
     @ToString.Exclude

@@ -1,5 +1,7 @@
 package com.ecommerce.project.model;
 
+import com.fasterxml.jackson.annotation.JsonBackReference;
+import com.fasterxml.jackson.annotation.JsonManagedReference;
 import jakarta.persistence.*;
 import jakarta.validation.constraints.NotBlank;
 import jakarta.validation.constraints.Size;
@@ -38,6 +40,8 @@ public class Product {
 
     @ManyToOne
     @JoinColumn(name = "category_id")
+    @JsonBackReference("category")
+    @ToString.Exclude
     private Category category;
 
     @ManyToOne
@@ -45,5 +49,7 @@ public class Product {
     private User user;
 
     @OneToMany(mappedBy = "product", cascade = {CascadeType.PERSIST, CascadeType.MERGE, CascadeType.REMOVE}, orphanRemoval = true)
+    @JsonManagedReference("cartItems")
+    @ToString.Exclude
     private List<CartItem> products = new ArrayList<>();
 }
